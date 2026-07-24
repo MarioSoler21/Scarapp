@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Generador de Expedientes — Gerencia de Infraestructura</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <span class="topbar-title">Generador de Expedientes</span>
+      <span class="topbar-subtitle">Gerencia de Infraestructura — Municipalidad de San Pedro Sula</span>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section id="step-upload" class="panel">
+      <h1>1. Subir documentos fuente</h1>
+      <p class="hint">Selecciona el Contrato de Obra Pública y la Orden de Inicio, ambos en formato PDF con texto (no escaneado).</p>
+
+      <form id="form-upload">
+        <div class="field">
+          <label for="contrato">Contrato de Obra Pública (PDF)</label>
+          <input type="file" id="contrato" name="contrato" accept="application/pdf" required />
+        </div>
+        <div class="field">
+          <label for="ordenInicio">Orden de Inicio (PDF)</label>
+          <input type="file" id="ordenInicio" name="ordenInicio" accept="application/pdf" required />
+        </div>
+        <button type="submit" class="btn-primary">Procesar PDF</button>
+      </form>
+
+      <div id="upload-status" class="status" hidden></div>
+    </section>
+
+    <section id="step-review" class="panel" hidden>
+      <h1>2. Revisar y completar datos</h1>
+      <p class="hint">Los campos con fondo resaltado se extrajeron automáticamente. Completa o corrige lo que haga falta antes de generar el expediente.</p>
+
+      <div id="errors-box" class="errors" hidden></div>
+
+      <form id="form-review">
+        <fieldset>
+          <legend>Datos del contrato</legend>
+          <div class="grid-2">
+            <div class="field"><label>Número de contrato</label><input data-k="numero_contrato" /></div>
+            <div class="field"><label>Monto del contrato (Lps.)</label><input data-k="monto_contrato" type="number" step="0.01" /></div>
+            <div class="field full"><label>Nombre del proyecto</label><textarea data-k="nombre_proyecto" rows="2"></textarea></div>
+            <div class="field full"><label>Ubicación</label><textarea data-k="ubicacion" rows="2"></textarea></div>
+            <div class="field"><label>Contratista</label><input data-k="contratista_nombre" /></div>
+            <div class="field"><label>Empresa</label><input data-k="empresa_nombre" /></div>
+            <div class="field"><label>Plazo (días)</label><input data-k="plazo_dias" type="number" /></div>
+            <div class="field"><label>Longitud total (m)</label><input data-k="total_metros" type="number" /></div>
+            <div class="field"><label>Fecha orden de inicio</label><input data-k="fecha_orden_inicio" /></div>
+            <div class="field"><label>Fecha de finalización</label><input data-k="fecha_finalizacion" /></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Firmas y datos administrativos</legend>
+          <div class="grid-2">
+            <div class="field"><label>Gerente de Infraestructura</label><input data-k="gerente_infraestructura" /></div>
+            <div class="field"><label>Jefe Mantenimiento de Vías y Sistemas</label><input data-k="jefe_mantenimiento_vias" /></div>
+            <div class="field"><label>Director de Infraestructura</label><input data-k="director_infraestructura" /></div>
+            <div class="field"><label>Supervisor asignado al proyecto</label><input data-k="supervisor_nombre" placeholder="[PENDIENTE]" /></div>
+            <div class="field"><label>Centro de costo</label><input data-k="centro_costo" /></div>
+            <div class="field"><label>Número de reserva presupuestaria</label><input data-k="numero_reserva" /></div>
+            <div class="field"><label>Código de reserva presupuestaria</label><input data-k="codigo_reserva" /></div>
+            <div class="field"><label>N.º de memorando (G-INFRAESTRUCTURA-___-2026)</label><input data-k="numero_memorando" /></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Fechas de los documentos de cierre</legend>
+          <div class="grid-2">
+            <div class="field"><label>Fecha del Acuerdo de Pago</label><input data-k="fecha_acuerdo_pago" /></div>
+            <div class="field"><label>Fecha del Memo de Avance Físico</label><input data-k="fecha_memo_avance" /></div>
+            <div class="field"><label>Fecha del Memorando a Tesorería</label><input data-k="fecha_memorando_tesoreria" /></div>
+            <div class="field"><label>Avance físico final (%)</label><input data-k="avance_fisico_pct" type="number" /></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Descripción de actividades</legend>
+          <div class="field full"><label>Descripción general (Ficha Técnica)</label><textarea data-k="descripcion_actividades" rows="3"></textarea></div>
+          <div class="grid-2">
+            <div class="field"><label>Actividad 1</label><input data-k="actividad_1" /></div>
+            <div class="field"><label>Actividad 2</label><input data-k="actividad_2" /></div>
+            <div class="field"><label>Actividad 3</label><input data-k="actividad_3" /></div>
+            <div class="field"><label>Actividad 4</label><input data-k="actividad_4" /></div>
+          </div>
+        </fieldset>
+
+        <fieldset id="informes-fieldset">
+          <legend>Informes semanales de actividades</legend>
+          <div id="informes-container"></div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="button" id="btn-back" class="btn-secondary">Volver</button>
+          <button type="submit" class="btn-primary">Generar expediente (.zip)</button>
+        </div>
+      </form>
+
+      <div id="generate-status" class="status" hidden></div>
+    </section>
+
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
