@@ -21,7 +21,14 @@ fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 const PENDIENTE = '[PENDIENTE]';
 
 const parseUpload = multer({ storage: multer.memoryStorage() });
-const generateUpload = multer({ dest: UPLOADS_DIR, limits: { fileSize: 25 * 1024 * 1024 } });
+
+// multer's default disk storage guarda los archivos sin extension; ImageRun de docx
+// necesita la extension para saber el tipo de imagen, asi que la preservamos aqui.
+const uploadStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+  filename: (req, file, cb) => cb(null, `${crypto.randomUUID()}${path.extname(file.originalname)}`),
+});
+const generateUpload = multer({ storage: uploadStorage, limits: { fileSize: 25 * 1024 * 1024 } });
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '2mb' }));

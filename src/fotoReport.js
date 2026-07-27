@@ -23,10 +23,12 @@ function scaledSize(filePath) {
   }
 }
 
+const VALID_TYPES = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'];
+
 function imageParagraph(fotoPath) {
   const { width, height } = scaledSize(fotoPath);
   const ext = path.extname(fotoPath).replace('.', '').toLowerCase();
-  const type = ext === 'jpg' ? 'jpeg' : ext;
+  const type = VALID_TYPES.includes(ext) ? ext : 'png';
   return new Paragraph({
     alignment: AlignmentType.CENTER,
     children: [

@@ -4,15 +4,31 @@
   <meta charset="utf-8" />
   <title>Generador de Expedientes — Gerencia de Infraestructura</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="/logo.png" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <span class="topbar-title">Generador de Expedientes</span>
-      <span class="topbar-subtitle">Gerencia de Infraestructura — Municipalidad de San Pedro Sula</span>
+      <img class="topbar-logo" src="/logo.png" alt="Escudo de San Pedro Sula" />
+      <div class="topbar-text">
+        <span class="topbar-title">Generador de Expedientes</span>
+        <span class="topbar-subtitle">Gerencia de Infraestructura — Municipalidad de San Pedro Sula</span>
+      </div>
     </div>
   </header>
+
+  <nav class="steps" aria-hidden="true">
+    <div class="step-item active" id="step-indicator-1">
+      <span class="dot">1</span>
+      <span>Subir documentos</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item" id="step-indicator-2">
+      <span class="dot">2</span>
+      <span>Revisar y generar</span>
+    </div>
+  </nav>
 
   <main class="container">
 

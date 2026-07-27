@@ -4,8 +4,15 @@ const uploadStatus = document.getElementById('upload-status');
 const generateStatus = document.getElementById('generate-status');
 const errorsBox = document.getElementById('errors-box');
 const informesContainer = document.getElementById('informes-container');
+const stepIndicator1 = document.getElementById('step-indicator-1');
+const stepIndicator2 = document.getElementById('step-indicator-2');
 
 let currentInformes = [];
+
+function setActiveStep(step) {
+  stepIndicator1.classList.toggle('active', step === 1);
+  stepIndicator2.classList.toggle('active', step === 2);
+}
 
 function showStatus(el, message, isError) {
   el.hidden = false;
@@ -91,6 +98,7 @@ document.getElementById('form-upload').addEventListener('submit', async (e) => {
     stepUpload.hidden = true;
     stepReview.hidden = false;
     uploadStatus.hidden = true;
+    setActiveStep(2);
   } catch (err) {
     showStatus(uploadStatus, err.message, true);
   } finally {
@@ -101,6 +109,7 @@ document.getElementById('form-upload').addEventListener('submit', async (e) => {
 document.getElementById('btn-back').addEventListener('click', () => {
   stepReview.hidden = true;
   stepUpload.hidden = false;
+  setActiveStep(1);
 });
 
 document.getElementById('form-review').addEventListener('submit', async (e) => {
