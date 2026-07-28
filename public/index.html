@@ -21,19 +21,49 @@
   <nav class="steps" aria-hidden="true">
     <div class="step-item active" id="step-indicator-1">
       <span class="dot">1</span>
-      <span>Subir documentos</span>
+      <span>Tipo de estimación</span>
     </div>
     <div class="step-line"></div>
     <div class="step-item" id="step-indicator-2">
       <span class="dot">2</span>
+      <span>Subir documentos</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item" id="step-indicator-3">
+      <span class="dot">3</span>
       <span>Revisar y generar</span>
     </div>
   </nav>
 
   <main class="container">
 
-    <section id="step-upload" class="panel">
-      <h1>1. Subir documentos fuente</h1>
+    <section id="step-tipo" class="panel">
+      <h1>1. Selecciona el tipo de estimación</h1>
+      <p class="hint">El expediente que se genera depende del tipo de obra. Elige la opción correspondiente para continuar.</p>
+
+      <div class="tipo-grid">
+        <button type="button" class="tipo-card" data-tipo="terraceria">
+          <span class="tipo-card-title">Estimación Terracería</span>
+          <span class="tipo-card-desc">Mantenimiento y conformación de vías no pavimentadas.</span>
+        </button>
+        <button type="button" class="tipo-card is-disabled" data-tipo="bacheo" disabled>
+          <span class="tipo-card-badge">Próximamente</span>
+          <span class="tipo-card-title">Estimación Bacheo Asfáltico</span>
+          <span class="tipo-card-desc">Reparación y bacheo de calles pavimentadas.</span>
+        </button>
+        <button type="button" class="tipo-card is-disabled" data-tipo="aguas_lluvias" disabled>
+          <span class="tipo-card-badge">Próximamente</span>
+          <span class="tipo-card-title">Estimación Aguas Lluvias</span>
+          <span class="tipo-card-desc">Obras de drenaje y evacuación pluvial.</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="step-upload" class="panel" hidden>
+      <div class="panel-header">
+        <h1>2. Subir documentos fuente</h1>
+        <button type="button" id="btn-change-tipo" class="btn-link">Cambiar tipo de estimación</button>
+      </div>
       <p class="hint">Selecciona el Contrato de Obra Pública y la Orden de Inicio, ambos en formato PDF con texto (no escaneado).</p>
 
       <form id="form-upload">
@@ -52,7 +82,7 @@
     </section>
 
     <section id="step-review" class="panel" hidden>
-      <h1>2. Revisar y completar datos</h1>
+      <h1>3. Revisar y completar datos</h1>
       <p class="hint">Los campos con fondo resaltado se extrajeron automáticamente. Completa o corrige lo que haga falta antes de generar el expediente.</p>
 
       <div id="errors-box" class="errors" hidden></div>

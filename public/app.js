@@ -1,3 +1,4 @@
+const stepTipo = document.getElementById('step-tipo');
 const stepUpload = document.getElementById('step-upload');
 const stepReview = document.getElementById('step-review');
 const uploadStatus = document.getElementById('upload-status');
@@ -6,13 +7,34 @@ const errorsBox = document.getElementById('errors-box');
 const informesContainer = document.getElementById('informes-container');
 const stepIndicator1 = document.getElementById('step-indicator-1');
 const stepIndicator2 = document.getElementById('step-indicator-2');
+const stepIndicator3 = document.getElementById('step-indicator-3');
 
 let currentInformes = [];
+let currentTipo = null;
 
 function setActiveStep(step) {
   stepIndicator1.classList.toggle('active', step === 1);
   stepIndicator2.classList.toggle('active', step === 2);
+  stepIndicator3.classList.toggle('active', step === 3);
 }
+
+document.querySelectorAll('.tipo-card:not(.is-disabled)').forEach((card) => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.tipo-card').forEach((c) => c.classList.remove('is-selected'));
+    card.classList.add('is-selected');
+    currentTipo = card.dataset.tipo;
+
+    stepTipo.hidden = true;
+    stepUpload.hidden = false;
+    setActiveStep(2);
+  });
+});
+
+document.getElementById('btn-change-tipo').addEventListener('click', () => {
+  stepUpload.hidden = true;
+  stepTipo.hidden = false;
+  setActiveStep(1);
+});
 
 function showStatus(el, message, isError) {
   el.hidden = false;
@@ -98,7 +120,7 @@ document.getElementById('form-upload').addEventListener('submit', async (e) => {
     stepUpload.hidden = true;
     stepReview.hidden = false;
     uploadStatus.hidden = true;
-    setActiveStep(2);
+    setActiveStep(3);
   } catch (err) {
     showStatus(uploadStatus, err.message, true);
   } finally {
@@ -109,12 +131,13 @@ document.getElementById('form-upload').addEventListener('submit', async (e) => {
 document.getElementById('btn-back').addEventListener('click', () => {
   stepReview.hidden = true;
   stepUpload.hidden = false;
-  setActiveStep(1);
+  setActiveStep(2);
 });
 
 document.getElementById('form-review').addEventListener('submit', async (e) => {
   e.preventDefault();
   const fields = collectReviewFields();
+  fields.tipo_estimacion = currentTipo;
 
   const informes = currentInformes.map((inf) => {
     const block = informesContainer.querySelector(`.informe-block[data-numero="${inf.numero}"]`);
