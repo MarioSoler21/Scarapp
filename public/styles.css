@@ -394,3 +394,36 @@ input[type="file"] {
 }
 .informe-block .grid-2 { margin-bottom: 10px; }
 .informe-block input[type="file"] { font-size: 12.5px; }
+
+.dyn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.dyn-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.dyn-row input { flex: 1; }
+.dyn-row .oc-monto { flex: 0 0 160px; }
+
+.btn-remove-item {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--danger);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.btn-remove-item:hover { background: var(--danger-bg); border-color: #e3b8b1; }
+
+.btn-add-item {
+  font-size: 12.5px;
+  padding: 7px 14px;
+}

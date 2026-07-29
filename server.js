@@ -7,7 +7,9 @@ const pdf = require('pdf-parse');
 
 const { parseContrato } = require('./src/parseContrato');
 const { parseOrdenInicio } = require('./src/parseOrdenInicio');
-const { splitPeriods, parseSpanishDate, formatSpanishDate } = require('./src/dateUtils');
+const {
+  splitPeriods, parseSpanishDate, weeklyPeriodCount, formatShortDate,
+} = require('./src/dateUtils');
 const { generateExpediente } = require('./src/buildAll');
 
 const app = express();
@@ -60,17 +62,28 @@ app.post(
         ...ordenRes.data, // la Orden de Inicio manda si hay choque (fechas, numero de contrato)
       };
 
+      const tipoEstimacion = req.body.tipoEstimacion || 'terraceria';
+      const numPeriodos = tipoEstimacion === 'terraceria'
+        ? 3
+        : weeklyPeriodCount(fields.plazo_dias, tipoEstimacion === 'sistemas' ? 4 : 8);
+
       const start = parseSpanishDate(fields.fecha_orden_inicio);
       const end = parseSpanishDate(fields.fecha_finalizacion);
-      const periods = start && end ? splitPeriods(start, end, 3) : [];
+      const periods = start && end ? splitPeriods(start, end, numPeriodos) : [];
 
-      const informes = [1, 2, 3].map((n) => ({
-        numero: n,
-        periodo: periods[n - 1] ? periods[n - 1].label : PENDIENTE,
-        dias_transcurridos: periods[n - 1] ? periods[n - 1].diasTranscurridos : '',
-        avance_fisico_pct: '',
-        metros_ejecutados: '',
-      }));
+      const informes = Array.from({ length: numPeriodos }, (_, i) => i + 1).map((n) => {
+        const p = periods[n - 1];
+        return {
+          numero: n,
+          periodo: p ? p.label : PENDIENTE,
+          periodo_corto: p ? `${formatShortDate(p.from)} AL ${formatShortDate(p.to)}` : PENDIENTE,
+          dias_transcurridos: p ? p.diasTranscurridos : '',
+          avance_fisico_pct: '',
+          metros_ejecutados: '',
+          actividades: [],
+          plan: [],
+        };
+      });
 
       const prefill = {
         ...fields,

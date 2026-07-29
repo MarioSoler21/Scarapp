@@ -46,15 +46,25 @@
           <span class="tipo-card-title">Estimación Terracería</span>
           <span class="tipo-card-desc">Mantenimiento y conformación de vías no pavimentadas.</span>
         </button>
-        <button type="button" class="tipo-card is-disabled" data-tipo="bacheo" disabled>
-          <span class="tipo-card-badge">Próximamente</span>
+        <button type="button" class="tipo-card" data-tipo="bacheo_asfaltico">
           <span class="tipo-card-title">Estimación Bacheo Asfáltico</span>
-          <span class="tipo-card-desc">Reparación y bacheo de calles pavimentadas.</span>
+          <span class="tipo-card-desc">Reparación de vías con mezcla asfáltica.</span>
         </button>
-        <button type="button" class="tipo-card is-disabled" data-tipo="aguas_lluvias" disabled>
-          <span class="tipo-card-badge">Próximamente</span>
-          <span class="tipo-card-title">Estimación Aguas Lluvias</span>
-          <span class="tipo-card-desc">Obras de drenaje y evacuación pluvial.</span>
+        <button type="button" class="tipo-card" data-tipo="bacheo_hidraulico">
+          <span class="tipo-card-title">Estimación Bacheo Hidráulico</span>
+          <span class="tipo-card-desc">Reparación de vías con concreto hidráulico.</span>
+        </button>
+        <button type="button" class="tipo-card" data-tipo="pavimentacion_menores">
+          <span class="tipo-card-title">Pavimentación Menores</span>
+          <span class="tipo-card-desc">Pavimentación con losas de concreto hidráulico.</span>
+        </button>
+        <button type="button" class="tipo-card" data-tipo="sello_de_juntas">
+          <span class="tipo-card-title">Sello de Juntas</span>
+          <span class="tipo-card-desc">Corte y sello de juntas y fisuras en pavimento.</span>
+        </button>
+        <button type="button" class="tipo-card" data-tipo="sistemas">
+          <span class="tipo-card-title">Estimación Sistemas</span>
+          <span class="tipo-card-desc">Otros proyectos del departamento (drenajes, obras menores).</span>
         </button>
       </div>
     </section>
@@ -137,6 +147,13 @@
             <div class="field"><label>Actividad 3</label><input data-k="actividad_3" /></div>
             <div class="field"><label>Actividad 4</label><input data-k="actividad_4" /></div>
           </div>
+        </fieldset>
+
+        <fieldset id="ordenes-cambio-fieldset" hidden>
+          <legend>Órdenes de cambio</legend>
+          <p class="hint">Si el proyecto tuvo órdenes de cambio, agrégalas aquí. Usa un monto negativo para una orden de cambio negativa (reducción).</p>
+          <div id="ordenes-cambio-container"></div>
+          <button type="button" id="btn-add-oc" class="btn-secondary btn-add-item">+ Agregar orden de cambio</button>
         </fieldset>
 
         <fieldset id="informes-fieldset">

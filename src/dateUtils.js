@@ -62,6 +62,18 @@ function splitPeriods(start, end, n) {
   return out;
 }
 
+function formatShortDate(date) {
+  const dd = String(date.getUTCDate()).padStart(2, '0');
+  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}/${date.getUTCFullYear()}`;
+}
+
+/** Cantidad de periodos semanales para un plazo dado, acotado a [1, max]. */
+function weeklyPeriodCount(plazoDias, max) {
+  const n = Math.ceil((Number(plazoDias) || 7) / 7);
+  return Math.min(max, Math.max(1, n));
+}
+
 module.exports = {
-  parseSpanishDate, formatSpanishDate, splitPeriods, diffDays, addDays,
+  parseSpanishDate, formatSpanishDate, formatShortDate, splitPeriods, diffDays, addDays, weeklyPeriodCount,
 };

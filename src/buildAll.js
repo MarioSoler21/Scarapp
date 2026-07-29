@@ -4,8 +4,23 @@ const archiver = require('archiver');
 const { fillExcelTemplate, fillExcelTemplateMultiSheet } = require('./excelFill');
 const { fillWordTemplate } = require('./wordFill');
 const { buildFotoReport } = require('./fotoReport');
+const { buildComplexInformeSemanal } = require('./complexInforme');
+const { buildSistemasInformes } = require('./sistemasInforme');
 
 const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
+
+// Carpeta de plantillas (Ficha Tecnica / Informes Semanales) por tipo de estimacion.
+// "sello_de_juntas" comparte formato con "bacheo_hidraulico" (mismo tipo de reparacion de pavimento).
+const TYPE_DIR = {
+  terraceria: 'terraceria',
+  bacheo_asfaltico: 'bacheo_asfaltico',
+  bacheo_hidraulico: 'bacheo_hidraulico',
+  sello_de_juntas: 'bacheo_hidraulico',
+  pavimentacion_menores: 'pavimentacion_menores',
+  sistemas: 'sistemas',
+};
+const COMPLEX_TYPES = new Set(['bacheo_asfaltico', 'bacheo_hidraulico', 'sello_de_juntas', 'pavimentacion_menores']);
+const MAX_ORDENES_CAMBIO = 4;
 
 const DEFAULT_ACTIVIDADES = [
   'Conformación de rasante, perfilado de cunetas, afinamiento y compactación de calles',
@@ -43,9 +58,28 @@ function splitNumeroContrato(numeroContrato) {
   return { prefijo: '', sufijo: numeroContrato || '' };
 }
 
+// fields.ordenes_cambio: [{ label, monto }, ...] (opcional; usado por Pavimentacion Menores y Sistemas).
+function buildOrdenesCambioData(fields) {
+  const ordenes = Array.isArray(fields.ordenes_cambio) ? fields.ordenes_cambio : [];
+  const montoBase = Number(fields.monto_contrato) || 0;
+  const data = {};
+  let total = montoBase;
+  for (let i = 0; i < MAX_ORDENES_CAMBIO; i += 1) {
+    const oc = ordenes[i];
+    const monto = oc ? Number(oc.monto) || 0 : '';
+    data[`oc_label_${i + 1}`] = oc ? (oc.label || '') : '';
+    data[`oc_monto_${i + 1}`] = monto;
+    if (oc) total += monto;
+  }
+  data.monto_total_pagar = total;
+  data._ordenesCambioCount = ordenes.filter((o) => o && (o.label || o.monto)).length;
+  return data;
+}
+
 function buildCommonData(fields) {
   const periodo = `De ${fields.fecha_orden_inicio} al ${fields.fecha_finalizacion}`;
   const { prefijo, sufijo } = splitNumeroContrato(fields.numero_contrato);
+  const avanceFisicoPct = numOr(fields.avance_fisico_pct);
   return {
     numero_contrato: fields.numero_contrato,
     numero_contrato_prefijo: prefijo || 'MSPS.GINF-COND.TER-',
@@ -78,13 +112,16 @@ function buildCommonData(fields) {
     fecha_memo_avance: fields.fecha_memo_avance,
     fecha_acuerdo_pago: fields.fecha_acuerdo_pago,
 
-    avance_fisico_pct: numOr(fields.avance_fisico_pct),
+    avance_fisico_pct: avanceFisicoPct,
+    avance_fisico_frac: typeof avanceFisicoPct === 'number' ? avanceFisicoPct / 100 : '',
 
     descripcion_actividades: fields.descripcion_actividades,
     actividad_1: fields.actividad_1 || DEFAULT_ACTIVIDADES[0],
     actividad_2: fields.actividad_2 || DEFAULT_ACTIVIDADES[1],
     actividad_3: fields.actividad_3 || DEFAULT_ACTIVIDADES[2],
     actividad_4: fields.actividad_4 || DEFAULT_ACTIVIDADES[3],
+
+    ...buildOrdenesCambioData(fields),
   };
 }
 
@@ -97,6 +134,7 @@ async function generateExpediente(fields, informes, outDir) {
   fs.mkdirSync(outDir, { recursive: true });
   const common = buildCommonData(fields);
   const sufijo = common.numero_contrato_sufijo || common.numero_contrato;
+  const tipoDir = TYPE_DIR[fields.tipo_estimacion] || 'terraceria';
 
   const outputs = [];
 
@@ -107,7 +145,7 @@ async function generateExpediente(fields, informes, outDir) {
   ));
 
   outputs.push(await fillExcelTemplate(
-    path.join(TEMPLATES_DIR, 'FICHA_TECNICA.xlsx'),
+    path.join(TEMPLATES_DIR, tipoDir, 'FICHA_TECNICA.xlsx'),
     common,
     path.join(outDir, `FICHA TECNICA ${sufijo}.xlsx`),
   ));
@@ -118,22 +156,40 @@ async function generateExpediente(fields, informes, outDir) {
     path.join(outDir, `SOLICITUD DE FORMALIZACION ${sufijo}.xlsx`),
   ));
 
-  const perSheet = informes.map((inf) => ({
-    numero_informe: inf.numero,
-    periodo_informe: inf.periodo,
-    avance_fisico_pct: numOr(inf.avance_fisico_pct),
-    metros_ejecutados: numOr(inf.metros_ejecutados),
-    dias_transcurridos: numOr(inf.dias_transcurridos),
-    avance_tiempo_frac: inf.dias_transcurridos && common.plazo_dias
-      ? Number((inf.dias_transcurridos / common.plazo_dias).toFixed(4))
-      : '',
-  }));
-  outputs.push(await fillExcelTemplateMultiSheet(
-    path.join(TEMPLATES_DIR, 'INFORMES_SEMANALES.xlsx'),
-    common,
-    perSheet,
-    path.join(outDir, `INFORMES SEMANALES ${sufijo}.xlsx`),
-  ));
+  if (COMPLEX_TYPES.has(fields.tipo_estimacion)) {
+    outputs.push(await buildComplexInformeSemanal(
+      path.join(TEMPLATES_DIR, tipoDir, 'INFORMES_SEMANALES.xlsx'),
+      common,
+      informes,
+      path.join(outDir, `INFORMES SEMANALES ${sufijo}.xlsx`),
+    ));
+  } else if (fields.tipo_estimacion === 'sistemas') {
+    const sistemasFiles = await buildSistemasInformes(
+      path.join(TEMPLATES_DIR, tipoDir, 'INFORME_SEMANAL.xlsx'),
+      common,
+      informes,
+      outDir,
+      sufijo,
+    );
+    outputs.push(...sistemasFiles);
+  } else {
+    const perSheet = informes.map((inf) => ({
+      numero_informe: inf.numero,
+      periodo_informe: inf.periodo,
+      avance_fisico_pct: numOr(inf.avance_fisico_pct),
+      metros_ejecutados: numOr(inf.metros_ejecutados),
+      dias_transcurridos: numOr(inf.dias_transcurridos),
+      avance_tiempo_frac: inf.dias_transcurridos && common.plazo_dias
+        ? Number((inf.dias_transcurridos / common.plazo_dias).toFixed(4))
+        : '',
+    }));
+    outputs.push(await fillExcelTemplateMultiSheet(
+      path.join(TEMPLATES_DIR, tipoDir, 'INFORMES_SEMANALES.xlsx'),
+      common,
+      perSheet,
+      path.join(outDir, `INFORMES SEMANALES ${sufijo}.xlsx`),
+    ));
+  }
 
   outputs.push(fillWordTemplate(
     path.join(TEMPLATES_DIR, 'MEMO_AVANCE_FISICO.docx'),
