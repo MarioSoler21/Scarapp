@@ -3,15 +3,23 @@ const path = require('path');
 const sizeOf = require('image-size');
 const {
   patchDocument, PatchType, Paragraph, TextRun, ImageRun, AlignmentType,
+  Table, TableRow, TableCell, WidthType, BorderStyle,
 } = require('docx');
 
 const TEMPLATE_PATH = path.join(__dirname, '..', 'templates', 'INFORME_FOTOGRAFICO.docx');
 
 // Ancho de contenido de la pagina original (carta, margenes 1701 twips = ~1.18in por lado): ~6.14in a 96dpi.
-const PHOTO_WIDTH_PX = 590;
-// Alto reservado para un espacio "en blanco" cuando no hay foto para ese puesto,
-// para que el documento se vea igual de ocupado que el ejemplo aunque falte una imagen.
+// Se reparte en 2 columnas (4 fotos por pagina, cuadricula 2x2), con un pequeno margen entre columnas.
+const PHOTO_WIDTH_PX = 280;
+// Alto reservado para un espacio "en blanco" cuando no hay foto para ese puesto (por fila de la
+// cuadricula), para que el documento se vea igual de ocupado que el ejemplo aunque falte una imagen.
 const BLANK_SLOT_HEIGHT_TWIPS = 4600;
+const PHOTOS_PER_PAGE = 4;
+
+const NO_BORDER = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+const NO_BORDERS = {
+  top: NO_BORDER, bottom: NO_BORDER, left: NO_BORDER, right: NO_BORDER,
+};
 
 function scaledSize(filePath) {
   try {
@@ -43,13 +51,35 @@ function imageParagraph(fotoPath) {
 
 function blankSlotParagraph() {
   // Parrafo vacio con espacio reservado, para mantener la misma diagramacion
-  // del ejemplo (2 fotos por pagina) incluso cuando falta una fotografia.
+  // del ejemplo (4 fotos por pagina) incluso cuando falta una fotografia.
   return new Paragraph({ spacing: { after: BLANK_SLOT_HEIGHT_TWIPS } });
+}
+
+function photoCell(foto) {
+  return new TableCell({
+    width: { size: 50, type: WidthType.PERCENTAGE },
+    borders: NO_BORDERS,
+    children: [foto ? imageParagraph(foto.path) : blankSlotParagraph()],
+  });
+}
+
+// Arma una cuadricula 2x2 (4 fotos por pagina) a partir de hasta 4 fotos; los espacios
+// sin foto quedan en blanco para no romper la diagramacion de la pagina.
+function photoGridTable(fotosChunk) {
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: NO_BORDERS,
+    rows: [
+      new TableRow({ children: [photoCell(fotosChunk[0]), photoCell(fotosChunk[1])] }),
+      new TableRow({ children: [photoCell(fotosChunk[2]), photoCell(fotosChunk[3])] }),
+    ],
+  });
 }
 
 /**
  * Genera el Informe Fotografico parcheando la plantilla original (mismo encabezado,
- * pie de firma y diseno), insertando las fotos de cada informe semanal, 2 por pagina.
+ * pie de firma y diseno), insertando las fotos de cada informe semanal en una
+ * cuadricula de 4 fotos por pagina (2x2).
  * `informes`: [{ numero, periodo, fotos: [{ path }] }, ...]
  */
 async function buildFotoReport(data, informes, outPath) {
@@ -57,10 +87,14 @@ async function buildFotoReport(data, informes, outPath) {
 
   informes.forEach((informe, idx) => {
     const fotos = informe.fotos || [];
-    const slotCount = Math.max(2, Math.ceil(fotos.length / 2) * 2);
+    const pageCount = Math.max(1, Math.ceil(fotos.length / PHOTOS_PER_PAGE));
 
-    for (let i = 0; i < slotCount; i += 1) {
-      fotosChildren.push(fotos[i] ? imageParagraph(fotos[i].path) : blankSlotParagraph());
+    for (let p = 0; p < pageCount; p += 1) {
+      if (p > 0) {
+        fotosChildren.push(new Paragraph({ children: [], pageBreakBefore: true }));
+      }
+      const chunk = fotos.slice(p * PHOTOS_PER_PAGE, p * PHOTOS_PER_PAGE + PHOTOS_PER_PAGE);
+      fotosChildren.push(photoGridTable(chunk));
     }
 
     const isLastInforme = idx === informes.length - 1;

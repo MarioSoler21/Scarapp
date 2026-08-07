@@ -102,6 +102,8 @@ function buildCommonData(fields) {
     jefe_mantenimiento_vias: fields.jefe_mantenimiento_vias,
     director_infraestructura: fields.director_infraestructura,
     supervisor_nombre: fields.supervisor_nombre,
+    supervisor_cargo: fields.supervisor_cargo || 'SUPERVISOR',
+    contratista_cargo: fields.contratista_cargo || 'representante legal',
 
     centro_costo: fields.centro_costo,
     numero_reserva: fields.numero_reserva,
@@ -197,11 +199,15 @@ async function generateExpediente(fields, informes, outDir) {
     path.join(outDir, `MEMO AVANCE FISICO ${sufijo}.docx`),
   ));
 
-  outputs.push(fillWordTemplate(
-    path.join(TEMPLATES_DIR, 'MEMORANDO_TESORERIA.docx'),
-    common,
-    path.join(outDir, `MEMORANDO TESORERIA ${sufijo}.docx`),
-  ));
+  // El Memo de Tesoreria ya no se usa en el expediente de Terraceria (se sigue
+  // generando para los demas tipos de estimacion).
+  if (fields.tipo_estimacion !== 'terraceria') {
+    outputs.push(fillWordTemplate(
+      path.join(TEMPLATES_DIR, 'MEMORANDO_TESORERIA.docx'),
+      common,
+      path.join(outDir, `MEMORANDO TESORERIA ${sufijo}.docx`),
+    ));
+  }
 
   outputs.push(await buildFotoReport(
     common,

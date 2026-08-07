@@ -427,3 +427,34 @@ input[type="file"] {
   font-size: 12.5px;
   padding: 7px 14px;
 }
+
+.plazo-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.foto-list { margin-top: 8px; }
+.foto-row {
+  background: var(--highlight);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 10px;
+}
+.foto-name {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint-inline {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}

@@ -16,6 +16,35 @@ const ORDENES_CAMBIO_TYPES = ['pavimentacion_menores', 'sistemas'];
 
 let currentInformes = [];
 let currentTipo = null;
+// numero de informe -> File[] seleccionados hasta ahora (se acumulan entre selecciones,
+// no se reemplazan, porque un <input type="file"> nativo pierde la seleccion anterior
+// cada vez que se abre el picker de nuevo).
+let fotosByInforme = new Map();
+
+function fotoKey(file) {
+  return `${file.name}|${file.size}|${file.lastModified}`;
+}
+
+function renderFotosList(block, numero) {
+  const list = block.querySelector('[data-fotos-list]');
+  const fotos = fotosByInforme.get(numero) || [];
+  list.innerHTML = '';
+  fotos.forEach((file, idx) => {
+    const row = document.createElement('div');
+    row.className = 'dyn-row foto-row';
+    row.innerHTML = `
+      <span class="foto-name">${file.name}</span>
+      <button type="button" class="btn-remove-item" aria-label="Quitar foto">&times;</button>
+    `;
+    row.querySelector('.btn-remove-item').addEventListener('click', () => {
+      fotos.splice(idx, 1);
+      renderFotosList(block, numero);
+    });
+    list.appendChild(row);
+  });
+  const countEl = block.querySelector('[data-fotos-count]');
+  if (countEl) countEl.textContent = fotos.length ? `${fotos.length} foto(s) seleccionada(s)` : '';
+}
 
 function setActiveStep(step) {
   stepIndicator1.classList.toggle('active', step === 1);
@@ -108,11 +137,19 @@ function updateOrdenesCambioVisibility() {
   ordenesCambioFieldset.hidden = !ORDENES_CAMBIO_TYPES.includes(currentTipo);
 }
 
+function updateMemoTesoreriaVisibility() {
+  const hide = currentTipo === 'terraceria';
+  document.querySelectorAll('.field-memo-tesoreria').forEach((el) => {
+    el.hidden = hide;
+  });
+}
+
 // --- Informes semanales (varian segun el tipo de estimacion) ---
 
-function renderInformes(informes) {
+function renderInformes(informes, plazoDias) {
   currentInformes = informes;
   informesContainer.innerHTML = '';
+  fotosByInforme = new Map(informes.map((inf) => [inf.numero, []]));
   const isComplex = COMPLEX_TYPES.includes(currentTipo);
   const isSistemas = currentTipo === 'sistemas';
   const showAvanceFisico = !isComplex; // terraceria y sistemas capturan avance fisico directo
@@ -147,12 +184,33 @@ function renderInformes(informes) {
         <div class="field full">
           <label>Fotografías del periodo</label>
           <input data-inf="fotos" type="file" accept="image/*" multiple />
+          <div class="dyn-list foto-list" data-fotos-list></div>
+          <span class="hint-inline" data-fotos-count></span>
         </div>`;
 
+    const plazoBadge = inf.dias_transcurridos && plazoDias
+      ? ` <span class="plazo-badge">(${inf.dias_transcurridos}/${plazoDias} días)</span>`
+      : '';
     block.innerHTML = `
-      <h3>Informe de actividades No. ${inf.numero}</h3>
+      <h3>Informe de actividades No. ${inf.numero}${plazoBadge}</h3>
       <div class="grid-2">${fieldsHtml}</div>
     `;
+
+    const fotosInput = block.querySelector('[data-inf="fotos"]');
+    fotosInput.addEventListener('change', () => {
+      const existing = fotosByInforme.get(inf.numero) || [];
+      const seen = new Set(existing.map(fotoKey));
+      Array.from(fotosInput.files).forEach((file) => {
+        const key = fotoKey(file);
+        if (!seen.has(key)) {
+          existing.push(file);
+          seen.add(key);
+        }
+      });
+      fotosByInforme.set(inf.numero, existing);
+      renderFotosList(block, inf.numero);
+      fotosInput.value = ''; // permite re-seleccionar la misma carpeta sin perder lo ya agregado
+    });
 
     if (showListas) {
       const actWrap = document.createElement('div');
@@ -213,8 +271,9 @@ document.getElementById('form-upload').addEventListener('submit', async (e) => {
     }
 
     fillReviewForm(data.fields);
-    renderInformes(data.informes);
+    renderInformes(data.informes, data.fields.plazo_dias);
     updateOrdenesCambioVisibility();
+    updateMemoTesoreriaVisibility();
     ordenesCambioContainer.innerHTML = '';
 
     stepUpload.hidden = true;
@@ -266,9 +325,7 @@ document.getElementById('form-review').addEventListener('submit', async (e) => {
   const form = new FormData();
   form.append('payload', JSON.stringify({ fields, informes }));
   currentInformes.forEach((inf) => {
-    const block = informesContainer.querySelector(`.informe-block[data-numero="${inf.numero}"]`);
-    const fileInput = block.querySelector('[data-inf="fotos"]');
-    Array.from(fileInput.files).forEach((file) => {
+    (fotosByInforme.get(inf.numero) || []).forEach((file) => {
       form.append(`fotos_${inf.numero}`, file);
     });
   });
